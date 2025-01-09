@@ -2,6 +2,8 @@
 
 import os
 import re
+import sys
+import logging
 
 
 def get_all_files(media_dir):
@@ -33,7 +35,7 @@ def extract_media_references(md_content):
     # Combine and deduplicate references
     all_references = set(md_references + html_references)
 
-    print(f"Extracted references from Markdown/HTML: {all_references}")
+    logging.debug(f"Extracted references from Markdown/HTML: {all_references}")
     return all_references
 
 
@@ -41,7 +43,7 @@ def process_directory(en_directory):
     """
     Process a single 'en' directory, archiving unreferenced media files.
     """
-    print(f"Processing directory: {en_directory}")
+    logging.info(f"Processing directory: {en_directory}")
 
     media_dir = os.path.join(en_directory, 'images')
     archive_dir = os.path.join(media_dir, 'archive')
@@ -52,7 +54,7 @@ def process_directory(en_directory):
 
     # Get all files in the media directory
     all_files = get_all_files(media_dir)
-    print(f"All files: {all_files}")
+    logging.info(f"All files: {all_files}")
 
     # Find all referenced media files
     referenced_files = set()
@@ -62,11 +64,11 @@ def process_directory(en_directory):
                 with open(os.path.join(root, file), 'r') as f:
                     content = f.read()
                     referenced_files.update(extract_media_references(content))
-    print(f"Referenced files: {referenced_files}")
+    logging.info(f"Referenced files: {referenced_files}")
 
     # Identify unreferenced files
     unreferenced_files = all_files - referenced_files - {'archive'}
-    print(f"Unreferenced files: {unreferenced_files}")
+    logging.info(f"Unreferenced files: {unreferenced_files}")
 
     # Move unreferenced files to the archive folder
     for file in unreferenced_files:
@@ -74,19 +76,19 @@ def process_directory(en_directory):
         dst = os.path.join(archive_dir, file)
         os.rename(src, dst)
 
-    print(f"Moved {len(unreferenced_files)} files to {archive_dir}")
+    logging.info(f"Moved {len(unreferenced_files)} files to {archive_dir}")
 
 
 def main():
     """
     Traverse the project directory and process all 'en' directories within.
     """
-    # This prompt can be altered when placed higher above the project dir
-    repo_directory = input("Enter the path to the project directory (slug): ")
+    repo_directory = input("Enter the path to the directory that contains\n"
+                           "a project (e.g. ~Documents/GitHub/Projects): ")
 
     if not os.path.exists(repo_directory):
-        print(f"The project {repo_directory} does not exist there.")
-        return
+        logging.error(f"The project {repo_directory} does not exist there.")
+        sys.exit(1)  # Exit the program with a non-zero status
 
     # Find all 'en' directories under the repo directory
     for root, dirs, _ in os.walk(repo_directory):
@@ -94,7 +96,7 @@ def main():
             if dir_name == 'en':
                 en_directory = os.path.join(root, dir_name)
                 process_directory(en_directory)
-    print(
+    logging.info(
         "Check the new archive folder for any media removed in error,\n"
         "then delete the archive folder to prevent issues\n"
         "when pushing the project to GitHub"
