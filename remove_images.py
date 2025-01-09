@@ -8,7 +8,12 @@ def get_all_files(media_dir):
     """
     List all files in the directory, excluding certain always-kept files.
     """
-    return set([file for file in os.listdir(media_dir) if file not in {".keep", "banner.png"}])
+    return set(
+        [
+            file for file in os.listdir(media_dir)
+            if file not in {".keep", "banner.png"}
+        ]
+    )
 
 
 def extract_media_references(md_content):
@@ -65,14 +70,19 @@ def process_directory(en_directory):
 
     # Move unreferenced files to the archive folder
     for file in unreferenced_files:
-        os.rename(os.path.join(media_dir, file), os.path.join(archive_dir, file))
+        src = os.path.join(media_dir, file)
+        dst = os.path.join(archive_dir, file)
+        os.rename(src, dst)
+
     print(f"Moved {len(unreferenced_files)} files to {archive_dir}")
+
 
 def main():
     """
     Traverse the project directory and process all 'en' directories within.
     """
-    repo_directory = input("Enter the path to the project directory (slug): ")  # This can be altered to go at a level above repo later
+    # This prompt can be altered when placed higher above the project dir
+    repo_directory = input("Enter the path to the project directory (slug): ")
 
     if not os.path.exists(repo_directory):
         print(f"The project {repo_directory} does not exist there.")
@@ -84,9 +94,12 @@ def main():
             if dir_name == 'en':
                 en_directory = os.path.join(root, dir_name)
                 process_directory(en_directory)
-    print("""Check the new archive folder for any media removed in error,
-    then delete the archive folder to prevent issues
-    when pushing the project to GitHub""")
+    print(
+        "Check the new archive folder for any media removed in error,\n"
+        "then delete the archive folder to prevent issues\n"
+        "when pushing the project to GitHub"
+    )
+
 
 if __name__ == "__main__":
     main()
